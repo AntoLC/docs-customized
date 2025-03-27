@@ -1,0 +1,122 @@
+:root {
+    --c--theme--colors--secondary-text: #e0e0e0;
+    --c--theme--colors--secondary-100: #2e2e2e;
+    --c--theme--colors--secondary-200: #3a3a3a;
+    --c--theme--colors--secondary-300: #4a4a4a;
+    --c--theme--colors--secondary-400: #ff4d4d;
+    --c--theme--colors--secondary-500: #e63946;
+    --c--theme--colors--secondary-600: #a82828;
+    --c--theme--colors--secondary-700: #7a1f1f;
+    --c--theme--colors--secondary-800: #5a1515;
+    --c--theme--colors--secondary-900: #3a0f0f;
+    --c--theme--colors--info-text: #4dabf7;
+    --c--theme--colors--info-100: #1e1e2e;
+    --c--theme--colors--info-200: #2a2a3e;
+    --c--theme--colors--info-300: #3a3a5e;
+    --c--theme--colors--info-400: #4dabf7;
+    --c--theme--colors--info-500: #1e90ff;
+    --c--theme--colors--info-600: #07c;
+    --c--theme--colors--info-700: #005fa3;
+    --c--theme--colors--info-800: #004080;
+    --c--theme--colors--info-900: #00264d;
+    --c--theme--colors--greyscale-100: #2e2e2e;
+    --c--theme--colors--greyscale-200: #3a3a3a;
+    --c--theme--colors--greyscale-300: #4a4a4a;
+    --c--theme--colors--greyscale-400: #5a5a5a;
+    --c--theme--colors--greyscale-500: #6a6a6a;
+    --c--theme--colors--greyscale-600: #b5b5b5;
+    --c--theme--colors--greyscale-700: #8a8a8a;
+    --c--theme--colors--greyscale-800: #9a9a9a;
+    --c--theme--colors--greyscale-900: #aaa;
+    --c--theme--colors--greyscale-000: #121212;
+    --c--theme--colors--primary-100: #1e1e2e;
+    --c--theme--colors--primary-200: #2a2a3e;
+    --c--theme--colors--primary-300: #3a3a5e;
+    --c--theme--colors--primary-400: #4a4a7e;
+    --c--theme--colors--primary-500: #5a5a9e;
+    --c--theme--colors--primary-600: #6a6abe;
+    --c--theme--colors--primary-700: #7a7ade;
+    --c--theme--colors--primary-800: #8a8afe;
+    --c--theme--colors--primary-900: #9a9aff;
+    --c--theme--colors--success-100: #1e2e1e;
+    --c--theme--colors--success-200: #2a3e2a;
+    --c--theme--colors--success-300: #3a5e3a;
+    --c--theme--colors--success-400: #4a7e4a;
+    --c--theme--colors--success-500: #5a9e5a;
+    --c--theme--colors--success-600: #6abe6a;
+    --c--theme--colors--success-700: #7ade7a;
+    --c--theme--colors--success-800: #8afe8a;
+    --c--theme--colors--success-900: #9aff9a;
+    --c--theme--colors--warning-100: #2e2e1e;
+    --c--theme--colors--warning-200: #3e3e2a;
+    --c--theme--colors--warning-300: #5e5e3a;
+    --c--theme--colors--warning-400: #7e7e4a;
+    --c--theme--colors--warning-500: #9e9e5a;
+    --c--theme--colors--warning-600: #bebe6a;
+    --c--theme--colors--warning-700: #dede7a;
+    --c--theme--colors--warning-800: #fefe8a;
+    --c--theme--colors--warning-900: #ffff9a;
+    --c--theme--colors--danger-100: #2e1e1e;
+    --c--theme--colors--danger-200: #3e2a2a;
+    --c--theme--colors--danger-300: #5e3a3a;
+    --c--theme--colors--danger-400: #7e4a4a;
+    --c--theme--colors--danger-500: #9e5a5a;
+    --c--theme--colors--danger-600: #be6a6a;
+    --c--theme--colors--danger-700: #de7a7a;
+    --c--theme--colors--danger-800: #fe8a8a;
+    --c--theme--colors--danger-900: #ff9a9a;
+    --c--theme--colors--primary-text: #8a8afe;
+    --c--theme--colors--success-text: #4caf50;
+    --c--theme--colors--warning-text: #ff9800;
+    --c--theme--colors--danger-text: #f44336;
+    --c--theme--colors--primary-bg: #121212;
+    --c--theme--colors--primary-action: #bb86fc;
+    --c--theme--colors--greyscale-1000: #8a8afe;
+    --c--components--modal--border-color: #8a8afe;
+  }
+  
+  .--docs--header,
+  .--docs--left-panel-header,
+  .--docs--left-panel-desktop,
+  .lasuite-gaufre-btn--vanilla,
+  .--docs--doc-grid,
+  .--docs--card,
+  .--docs--left-panel-header > div {
+    background-color: var(--c--theme--colors--primary-100) !important;
+    border-color: var(--c--theme--colors--primary-800) !important;
+  }
+  
+  .--docs--title h2,
+  .--docs--header,
+  .--docs--left-panel-header,
+  .--docs--left-panel-desktop,
+  .lasuite-gaufre-btn--vanilla {
+    color: var(--c--theme--colors--primary-800) !important;
+  }
+  
+  .--docs--header svg path {
+    fill: var(--c--theme--colors--primary-800) !important;
+  }
+  
+  #mainContent {
+    background-color: var(--c--theme--colors--primary-300) !important;
+  }
+  
+  .quick-search-container > div {
+    background-color: var(--c--components--modal--background-color) !important;
+  }
+  
+  .--docs--horizontal-separator {
+    background-color: var(--c--theme--colors--primary-800) !important;
+  }
+  
+  .c__modal {
+    border-width: 1px;
+    border-style: solid;
+  }
+  
+  .quick-search-container [cmdk-input] {
+    background-color: var(--c--theme--colors--primary-100) !important;
+    border-radius: 15px;
+    color: var(--c--theme--colors--primary-800) !important;
+  }
