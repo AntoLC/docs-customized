@@ -1,0 +1,239 @@
+/* Dark Mode - Orangeish Theme */
+:root {
+  --c--globals--colors--logo-1: #e65c00;
+
+  /* Base Colors - Dark backgrounds with warm tones */
+  --c--globals--colors--gray-000: #0a0604;
+  --c--globals--colors--gray-025: #1a0f08;
+  --c--globals--colors--gray-050: #2a1810;
+  --c--globals--colors--gray-100: #3a2118;
+  --c--globals--colors--gray-150: #4a2a20;
+  --c--globals--colors--gray-200: #5a3328;
+  --c--globals--colors--gray-250: #6a3c30;
+  --c--globals--colors--gray-300: #7a4538;
+  --c--globals--colors--gray-350: #8a4e40;
+  --c--globals--colors--gray-400: #9a5748;
+  --c--globals--colors--gray-450: #aa6050;
+  --c--globals--colors--gray-500: #ba6958;
+  --c--globals--colors--gray-550: #ca7260;
+  --c--globals--colors--gray-600: #da7b68;
+  --c--globals--colors--gray-650: #ea8470;
+  --c--globals--colors--gray-700: #f08d78;
+  --c--globals--colors--gray-750: #f29680;
+  --c--globals--colors--gray-800: #f4a088;
+  --c--globals--colors--gray-850: #f6a990;
+  --c--globals--colors--gray-900: #f8b298;
+  --c--globals--colors--gray-950: #fabba0;
+  --c--globals--colors--gray-1000: #fcc4a8;
+
+  /* Brand Colors - Vibrant oranges */
+  --c--globals--colors--brand-050: #1a0a00;
+  --c--globals--colors--brand-100: #331400;
+  --c--globals--colors--brand-150: #4d1f00;
+  --c--globals--colors--brand-200: #662900;
+  --c--globals--colors--brand-250: #803300;
+  --c--globals--colors--brand-300: #993d00;
+  --c--globals--colors--brand-350: #b34700;
+  --c--globals--colors--brand-400: #cc5200;
+  --c--globals--colors--brand-450: #e65c00;
+  --c--globals--colors--brand-500: #f60;
+  --c--globals--colors--brand-550: #ff7519;
+  --c--globals--colors--brand-600: #ff8533;
+  --c--globals--colors--brand-650: #ff944d;
+  --c--globals--colors--brand-700: #ffa366;
+  --c--globals--colors--brand-750: #ffb380;
+  --c--globals--colors--brand-800: #ffc299;
+  --c--globals--colors--brand-850: #ffd1b3;
+  --c--globals--colors--brand-900: #ffe0cc;
+  --c--globals--colors--brand-950: #fff0e6;
+
+  /* Orange Palette - Warm and inviting */
+  --c--globals--colors--orange-050: #1f0f00;
+  --c--globals--colors--orange-100: #3d1e00;
+  --c--globals--colors--orange-150: #5c2d00;
+  --c--globals--colors--orange-200: #7a3c00;
+  --c--globals--colors--orange-250: #994b00;
+  --c--globals--colors--orange-300: #b85a00;
+  --c--globals--colors--orange-350: #d66900;
+  --c--globals--colors--orange-400: #f57800;
+  --c--globals--colors--orange-450: #ff8719;
+  --c--globals--colors--orange-500: #ff9633;
+  --c--globals--colors--orange-550: #ffa54d;
+  --c--globals--colors--orange-600: #ffb466;
+  --c--globals--colors--orange-650: #ffc380;
+  --c--globals--colors--orange-700: #ffd299;
+  --c--globals--colors--orange-750: #ffe1b3;
+  --c--globals--colors--orange-800: #fff0cc;
+  --c--globals--colors--orange-850: #fff5e0;
+  --c--globals--colors--orange-900: #fffaf2;
+  --c--globals--colors--orange-950: #fffdf9;
+
+  /* Red Palette - Deep and warm */
+  --c--globals--colors--red-050: #1a0503;
+  --c--globals--colors--red-100: #330a05;
+  --c--globals--colors--red-200: #661408;
+  --c--globals--colors--red-300: #991f0a;
+  --c--globals--colors--red-400: #cc290d;
+  --c--globals--colors--red-500: #ff3310;
+  --c--globals--colors--red-600: #ff5c40;
+  --c--globals--colors--red-700: #ff8570;
+  --c--globals--colors--red-800: #ffaea0;
+  --c--globals--colors--red-900: #ffd7d0;
+  --c--globals--colors--red-950: #ffebe8;
+
+  /* Yellow Palette - Warm amber */
+  --c--globals--colors--yellow-050: #1f1500;
+  --c--globals--colors--yellow-100: #3d2a00;
+  --c--globals--colors--yellow-200: #7a5400;
+  --c--globals--colors--yellow-300: #b87e00;
+  --c--globals--colors--yellow-400: #f5a800;
+  --c--globals--colors--yellow-500: #ffc419;
+  --c--globals--colors--yellow-600: #ffd04d;
+  --c--globals--colors--yellow-700: #ffdc80;
+  --c--globals--colors--yellow-800: #ffe8b3;
+  --c--globals--colors--yellow-900: #fff4e6;
+  --c--globals--colors--yellow-950: #fffaf3;
+
+  /* Green Palette - Muted olive green */
+  --c--globals--colors--green-050: #0a0f05;
+  --c--globals--colors--green-100: #141f0a;
+  --c--globals--colors--green-200: #283e14;
+  --c--globals--colors--green-300: #3c5d1f;
+  --c--globals--colors--green-400: #507c29;
+  --c--globals--colors--green-500: #649b33;
+  --c--globals--colors--green-600: #83af5c;
+  --c--globals--colors--green-700: #a2c385;
+  --c--globals--colors--green-800: #c1d7ae;
+  --c--globals--colors--green-900: #e0ebd7;
+  --c--globals--colors--green-950: #f0f5eb;
+
+  /* Blue Palette 1 - Deep teal */
+  --c--globals--colors--blue-1-050: #051014;
+  --c--globals--colors--blue-1-100: #0a2028;
+  --c--globals--colors--blue-1-200: #144050;
+  --c--globals--colors--blue-1-300: #1f6078;
+  --c--globals--colors--blue-1-400: #2980a0;
+  --c--globals--colors--blue-1-500: #33a0c8;
+  --c--globals--colors--blue-1-600: #5cb3d3;
+  --c--globals--colors--blue-1-700: #85c6de;
+  --c--globals--colors--blue-1-800: #aed9e9;
+  --c--globals--colors--blue-1-900: #d7ecf4;
+  --c--globals--colors--blue-1-950: #ebf6fa;
+
+  /* Purple Palette - Warm purple */
+  --c--globals--colors--purple-050: #140a14;
+  --c--globals--colors--purple-100: #281428;
+  --c--globals--colors--purple-200: #502850;
+  --c--globals--colors--purple-300: #783c78;
+  --c--globals--colors--purple-400: #a050a0;
+  --c--globals--colors--purple-500: #c864c8;
+  --c--globals--colors--purple-600: #d383d3;
+  --c--globals--colors--purple-700: #dea2de;
+  --c--globals--colors--purple-800: #e9c1e9;
+  --c--globals--colors--purple-900: #f4e0f4;
+  --c--globals--colors--purple-950: #faf0fa;
+
+  /* Contextual Backgrounds */
+  --c--contextuals--background--surface--primary: #1a0f08;
+  --c--contextuals--background--surface--secondary: #2a1810;
+  --c--contextuals--background--surface--tertiary: #3a2118;
+  --c--contextuals--background--surface--quaternary: #4a2a20;
+
+  /* Contextual Content - Light text on dark */
+  --c--contextuals--content--semantic--brand--primary: #ff8533;
+  --c--contextuals--content--semantic--brand--secondary: #ffa366;
+  --c--contextuals--content--semantic--brand--tertiary: #ffb380;
+  --c--contextuals--content--semantic--neutral--primary: #f8b298;
+  --c--contextuals--content--semantic--neutral--secondary: #f4a088;
+  --c--contextuals--content--semantic--neutral--tertiary: #ea8470;
+
+  /* Semantic Colors - Info */
+  --c--contextuals--background--semantic--info--primary: #1f6078;
+  --c--contextuals--background--semantic--info--secondary: #144050;
+  --c--contextuals--background--semantic--info--tertiary: #0a2028;
+  --c--contextuals--content--semantic--info--primary: #85c6de;
+  --c--contextuals--content--semantic--info--secondary: #5cb3d3;
+  --c--contextuals--border--semantic--info--primary: #33a0c8;
+
+  /* Semantic Colors - Success */
+  --c--contextuals--background--semantic--success--primary: #507c29;
+  --c--contextuals--background--semantic--success--secondary: #3c5d1f;
+  --c--contextuals--background--semantic--success--tertiary: #283e14;
+  --c--contextuals--content--semantic--success--primary: #a2c385;
+  --c--contextuals--content--semantic--success--secondary: #83af5c;
+  --c--contextuals--border--semantic--success--primary: #649b33;
+
+  /* Semantic Colors - Warning */
+  --c--contextuals--background--semantic--warning--primary: #f5a800;
+  --c--contextuals--background--semantic--warning--secondary: #b87e00;
+  --c--contextuals--background--semantic--warning--tertiary: #7a5400;
+  --c--contextuals--content--semantic--warning--primary: #ffe8b3;
+  --c--contextuals--content--semantic--warning--secondary: #ffdc80;
+  --c--contextuals--border--semantic--warning--primary: #ffc419;
+
+  /* Semantic Colors - Error */
+  --c--contextuals--background--semantic--error--primary: #cc290d;
+  --c--contextuals--background--semantic--error--secondary: #991f0a;
+  --c--contextuals--background--semantic--error--tertiary: #661408;
+  --c--contextuals--content--semantic--error--primary: #ffaea0;
+  --c--contextuals--content--semantic--error--secondary: #ff8570;
+  --c--contextuals--border--semantic--error--primary: #ff5c40;
+
+  /* Border Colors */
+  --c--contextuals--border--surface--primary: #5a3328;
+  --c--contextuals--border--semantic--neutral--primary: #6a3c30;
+  --c--contextuals--border--semantic--neutral--secondary: #7a4538;
+  --c--contextuals--border--semantic--brand--primary: #f60;
+  --c--contextuals--border--semantic--brand--secondary: #ff7519;
+
+  /* Component specific overrides */
+  --c--components--tooltip--background-color: #3a2118;
+  --c--components--datagrid--header--color: #f8b298;
+  --c--components--datagrid--body--background-color-hover: #2a1810;
+  --c--components--badge--accent--background-color: #f60;
+  --c--components--badge--accent--color: #fff0e6;
+  --c--components--badge--neutral--background-color: #4a2a20;
+  --c--components--badge--neutral--color: #f8b298;
+  --c--components--badge--danger--background-color: #cc290d;
+  --c--components--badge--danger--color: #ffebe8;
+  --c--components--badge--success--background-color: #507c29;
+  --c--components--badge--success--color: #e0ebd7;
+  --c--components--badge--warning--background-color: #f5a800;
+  --c--components--badge--warning--color: #1f1500;
+  --c--components--badge--info--background-color: #2980a0;
+  --c--components--badge--info--color: #ebf6fa;
+}
+
+/* Additional dark mode enhancements */
+* {
+  scrollbar-color: #f60 #1a0f08;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a0f08;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #f60;
+  border-radius: 6px;
+  border: 2px solid #1a0f08;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff7519;
+}
+
+/* Selection color */
+::selection {
+  background-color: #f60;
+  color: #fff0e6;
+}
+
+::selection {
+  background-color: #f60;
+  color: #fff0e6;
+}
+
+.--docs--header img {
+  filter: invert(1) sepia(1) saturate(5) hue-rotate(10deg);
+}
