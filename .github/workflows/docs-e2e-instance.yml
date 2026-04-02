@@ -84,16 +84,10 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "22.x"
-
-      - name: Restore frontend dependencies cache
-        uses: actions/cache@v5
-        with:
-          path: |
-            docs/src/frontend/node_modules
-            docs/src/frontend/apps/e2e/node_modules
-          key: frontend-yarn-${{ runner.os }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
-          restore-keys: |
-            frontend-yarn-${{ runner.os }}-
+          cache: yarn
+          cache-dependency-path: |
+            docs/src/frontend/yarn.lock
+            docs/src/frontend/apps/e2e/yarn.lock
 
       - name: Install frontend dependencies
         run: |
@@ -109,7 +103,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v6
         with:
           name: playwright-instance-last-run-${{ inputs.instance }}-${{ matrix.browser }}
-          path: docs/src/frontend
+          path: docs/src/frontend/apps/e2e/test-results
           workflow: docs-e2e-instance.yml
           workflow_conclusion: ""
           if_no_artifact_found: warn
@@ -182,16 +176,10 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "22.x"
-
-      - name: Restore frontend dependencies cache
-        uses: actions/cache@v5
-        with:
-          path: |
-            docs/src/frontend/node_modules
-            docs/src/frontend/apps/e2e/node_modules
-          key: frontend-yarn-${{ runner.os }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
-          restore-keys: |
-            frontend-yarn-${{ runner.os }}-
+          cache: yarn
+          cache-dependency-path: |
+            docs/src/frontend/yarn.lock
+            docs/src/frontend/apps/e2e/yarn.lock
 
       - name: Install frontend dependencies
         run: |
