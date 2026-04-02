@@ -53,7 +53,7 @@ jobs:
 
       - name: Restore the frontend cache
         id: cache-frontend
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: "docs/src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('docs/src/frontend/**/yarn.lock') }}
@@ -63,6 +63,13 @@ jobs:
         run: |
           cd docs/src/frontend
           yarn install --frozen-lockfile
+
+      - name: Save the frontend cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: "docs/src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('docs/src/frontend/**/yarn.lock') }}
 
       - name: Add config file
         run: |
