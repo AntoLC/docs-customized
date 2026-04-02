@@ -1,0 +1,98 @@
+name: E2E Tests on Docs Instance
+
+on:
+  workflow_dispatch:
+    inputs:
+      instance:
+        description: Instance to run e2e tests on
+        required: false
+        default: preprod
+        type: choice
+        options:
+          - preprod
+          - staging
+      browsers:
+        description: Browsers to run e2e tests on
+        required: false
+        default: chromium
+        type: choice
+        options:
+          - chromium
+          - firefox
+          - webkit
+          - all
+
+jobs:
+  e2e-on-instance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout docs-customized
+        uses: actions/checkout@v4
+        with:
+          path: docs-customized
+
+      - name: Checkout suitenumerique/docs
+        uses: actions/checkout@v4
+        with:
+          repository: suitenumerique/docs
+          ref: e2e/test-on-instance
+          path: docs
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+
+      - name: Restore the frontend cache
+        id: cache-frontend
+        uses: actions/cache@v4
+        with:
+          path: "docs/src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('docs/src/frontend/**/yarn.lock') }}
+
+      - name: Install frontend dependencies
+        if: steps.cache-frontend.outputs.cache-hit != 'true'
+        run: |
+          cd docs/src/frontend
+          yarn install --frozen-lockfile
+
+      - name: Write config file
+        run: |
+          cp docs-customized/docs-custom/env.d/${{ inputs.instance }}/.env.e2e docs/src/frontend/apps/e2e/.env.local
+
+      - name: Install Playwright browsers
+        run: |
+          cd docs/src/frontend/apps/e2e
+          if [ "${{ inputs.browsers }}" = "all" ]; then
+            yarn install-playwright chromium firefox webkit
+          else
+            yarn install-playwright ${{ inputs.browsers }}
+          fi
+
+      - name: Run e2e tests
+        run: |
+          cd docs/src/frontend
+          if [ "${{ inputs.browsers }}" = "all" ]; then
+            yarn e2e:test --project=chromium --project=firefox --project=webkit
+          else
+            yarn e2e:test --project=${{ inputs.browsers }}
+          fi
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-instance-report-${{ inputs.browsers }}
+          path: docs/src/frontend/apps/e2e/report/
+          retention-days: 7
+
+      - name: Upload test results on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-instance-results-${{ inputs.browsers }}
+          path: docs/src/frontend/apps/e2e/test-results/
+          retention-days: 7
