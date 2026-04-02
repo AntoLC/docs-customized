@@ -64,9 +64,9 @@ jobs:
           cd docs/src/frontend
           yarn install --frozen-lockfile
 
-      - name: Write config file
+      - name: Add config file
         run: |
-          cp docs-customized/docs-custom/env.d/${{ inputs.instance }}/.env.e2e docs/src/frontend/apps/e2e/.env.local
+          cp docs-customized/docs-custom/${{ inputs.instance }}/.env.e2e docs/src/frontend/apps/e2e/.env.local
 
       - name: Download last-run artifact
         if: ${{ inputs.last_failed }}
