@@ -27,107 +27,184 @@ on:
         default: false
         type: boolean
 
+concurrency:
+  group: e2e-instance-${{ github.workflow }}-${{ inputs.instance }}-${{ inputs.browsers }}
+  cancel-in-progress: false
+
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      browser_matrix: ${{ steps.set-matrix.outputs.browser_matrix }}
+      shard_total: ${{ steps.set-matrix.outputs.shard_total }}
+    steps:
+      - id: set-matrix
+        shell: bash
+        run: |
+          if [ "${{ inputs.browsers }}" = "all" ]; then
+            echo 'browser_matrix=["chromium","firefox","webkit"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'browser_matrix=["${{ inputs.browsers }}"]' >> "$GITHUB_OUTPUT"
+          fi
+
+          # Adjust this depending on your suite size.
+          # 4 shards is a good starting point.
+          echo 'shard_total=4' >> "$GITHUB_OUTPUT"
+
   e2e-on-instance:
+    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: ${{ fromJson(needs.prepare.outputs.browser_matrix) }}
+        shard_index: [1, 2, 3, 4]
+
     steps:
       - name: Checkout docs-customized
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: docs-customized
 
       - name: Checkout suitenumerique/docs
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: suitenumerique/docs
           ref: e2e/test-on-instance
           path: docs
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22.x"
 
-      - name: Restore the frontend cache
-        id: cache-frontend
+      - name: Restore frontend dependencies cache
         uses: actions/cache@v5
         with:
-          path: "docs/src/frontend/**/node_modules"
-          key: front-node_modules-${{ hashFiles('docs/src/frontend/**/yarn.lock') }}
+          path: |
+            docs/src/frontend/node_modules
+            docs/src/frontend/apps/e2e/node_modules
+          key: frontend-yarn-${{ runner.os }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
+          restore-keys: |
+            frontend-yarn-${{ runner.os }}-
 
       - name: Install frontend dependencies
-        if: steps.cache-frontend.outputs.cache-hit != 'true'
         run: |
           cd docs/src/frontend
           yarn install --frozen-lockfile
-
-      - name: Save the frontend cache
-        if: steps.cache-frontend.outputs.cache-hit != 'true'
-        uses: actions/cache@v5
-        with:
-          path: "docs/src/frontend/**/node_modules"
-          key: front-node_modules-${{ hashFiles('docs/src/frontend/**/yarn.lock') }}
 
       - name: Add config file
         run: |
           cp docs-customized/docs-custom/${{ inputs.instance }}/.env.e2e docs/src/frontend/apps/e2e/.env.local
 
-      - name: Download last-run artifact
+      - name: Restore last-run.json
         if: ${{ inputs.last_failed }}
         uses: dawidd6/action-download-artifact@v6
         with:
-          name: playwright-instance-last-run-${{ inputs.browsers }}
-          path: docs/src/frontend/apps/e2e
+          name: playwright-instance-last-run-${{ inputs.instance }}-${{ matrix.browser }}
+          path: docs/src/frontend
           workflow: docs-e2e-instance.yml
           workflow_conclusion: ""
           if_no_artifact_found: warn
         continue-on-error: true
 
-      - name: Install Playwright browsers
+      - name: Install Playwright browser
         run: |
           cd docs/src/frontend/apps/e2e
-          if [ "${{ inputs.browsers }}" = "all" ]; then
-            yarn install-playwright chromium firefox webkit
-          else
-            yarn install-playwright ${{ inputs.browsers }}
-          fi
+          yarn install-playwright ${{ matrix.browser }}
 
-      - name: Run e2e tests
+      - name: Run e2e tests (sharded)
+        env:
+          PLAYWRIGHT_HTML_OPEN: never
         run: |
           cd docs/src/frontend
+
           LAST_FAILED_FLAG=""
           if [ "${{ inputs.last_failed }}" = "true" ]; then
             LAST_FAILED_FLAG="--last-failed"
           fi
-          if [ "${{ inputs.browsers }}" = "all" ]; then
-            yarn e2e:test --project=chromium --project=firefox --project=webkit --reporter=list --max-failures=0 $LAST_FAILED_FLAG
-          else
-            yarn e2e:test --project=${{ inputs.browsers }} --reporter=list --max-failures=0 $LAST_FAILED_FLAG
-          fi
 
-      - name: Upload last-run artifact
-        uses: actions/upload-artifact@v4
+          yarn e2e:test \
+            --project=${{ matrix.browser }} \
+            --shard=${{ matrix.shard_index }}/${{ needs.prepare.outputs.shard_total }} \
+            --reporter=blob \
+            --max-failures=0 \
+            $LAST_FAILED_FLAG
+
+      - name: Upload blob report
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: playwright-instance-last-run-${{ inputs.browsers }}
-          path: docs/src/frontend/apps/e2e/.last-run.json
+          name: blob-report-${{ inputs.instance }}-${{ matrix.browser }}-shard-${{ matrix.shard_index }}
+          path: docs/src/frontend/blob-report
           retention-days: 7
 
-      - name: Upload test report
-        uses: actions/upload-artifact@v4
+      - name: Upload last-run artifact
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: playwright-instance-report-${{ inputs.browsers }}
-          path: docs/src/frontend/apps/e2e/report/
+          name: playwright-instance-last-run-${{ inputs.instance }}-${{ matrix.browser }}
+          path: docs/src/frontend/.last-run.json
           retention-days: 7
 
       - name: Upload test results on failure
-        uses: actions/upload-artifact@v4
         if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          name: playwright-instance-results-${{ inputs.browsers }}
+          name: playwright-instance-results-${{ inputs.instance }}-${{ matrix.browser }}-shard-${{ matrix.shard_index }}
           path: docs/src/frontend/apps/e2e/test-results/
+          retention-days: 7
+
+  merge-reports:
+    needs: e2e-on-instance
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout suitenumerique/docs
+        uses: actions/checkout@v5
+        with:
+          repository: suitenumerique/docs
+          ref: e2e/test-on-instance
+          path: docs
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.x"
+
+      - name: Restore frontend dependencies cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            docs/src/frontend/node_modules
+            docs/src/frontend/apps/e2e/node_modules
+          key: frontend-yarn-${{ runner.os }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
+          restore-keys: |
+            frontend-yarn-${{ runner.os }}-
+
+      - name: Install frontend dependencies
+        run: |
+          cd docs/src/frontend
+          yarn install --frozen-lockfile
+
+      - name: Download all blob reports
+        uses: actions/download-artifact@v4
+        with:
+          path: docs/src/frontend/all-blob-reports
+          pattern: blob-report-${{ inputs.instance }}-*
+          merge-multiple: true
+
+      - name: Merge Playwright reports
+        run: |
+          cd docs/src/frontend
+          npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload merged HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-instance-report-${{ inputs.instance }}
+          path: docs/src/frontend/playwright-report
           retention-days: 7
