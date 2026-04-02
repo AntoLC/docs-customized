@@ -21,6 +21,11 @@ on:
           - firefox
           - webkit
           - all
+      last_failed:
+        description: Only re-run tests that failed in the last run
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   e2e-on-instance:
@@ -63,6 +68,14 @@ jobs:
         run: |
           cp docs-customized/docs-custom/env.d/${{ inputs.instance }}/.env.e2e docs/src/frontend/apps/e2e/.env.local
 
+      - name: Download last-run artifact
+        if: ${{ inputs.last_failed }}
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-instance-last-run-${{ inputs.browsers }}
+          path: docs/src/frontend/apps/e2e
+        continue-on-error: true
+
       - name: Install Playwright browsers
         run: |
           cd docs/src/frontend/apps/e2e
@@ -75,11 +88,23 @@ jobs:
       - name: Run e2e tests
         run: |
           cd docs/src/frontend
-          if [ "${{ inputs.browsers }}" = "all" ]; then
-            yarn e2e:test --project=chromium --project=firefox --project=webkit
-          else
-            yarn e2e:test --project=${{ inputs.browsers }}
+          LAST_FAILED_FLAG=""
+          if [ "${{ inputs.last_failed }}" = "true" ]; then
+            LAST_FAILED_FLAG="--last-failed"
           fi
+          if [ "${{ inputs.browsers }}" = "all" ]; then
+            yarn e2e:test --project=chromium --project=firefox --project=webkit $LAST_FAILED_FLAG
+          else
+            yarn e2e:test --project=${{ inputs.browsers }} $LAST_FAILED_FLAG
+          fi
+
+      - name: Upload last-run artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-instance-last-run-${{ inputs.browsers }}
+          path: docs/src/frontend/apps/e2e/.last-run.json
+          retention-days: 7
 
       - name: Upload test report
         uses: actions/upload-artifact@v4
