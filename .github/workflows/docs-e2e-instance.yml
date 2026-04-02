@@ -21,6 +21,15 @@ on:
           - firefox
           - webkit
           - all
+      parallel_jobs:
+        description: Maximum number of browser jobs to run in parallel
+        required: false
+        default: "2"
+        type: choice
+        options:
+          - "1"
+          - "2"
+          - "3"
       last_failed:
         description: Only re-run tests that failed in the last run
         required: false
@@ -28,7 +37,7 @@ on:
         type: boolean
 
 concurrency:
-  group: e2e-instance-${{ github.workflow }}-${{ inputs.instance }}-${{ inputs.browsers }}
+  group: e2e-instance-${{ github.workflow }}-${{ inputs.instance }}-${{ inputs.browsers }}-${{ inputs.parallel_jobs }}
   cancel-in-progress: false
 
 jobs:
@@ -36,7 +45,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       browser_matrix: ${{ steps.set-matrix.outputs.browser_matrix }}
-      shard_total: ${{ steps.set-matrix.outputs.shard_total }}
     steps:
       - id: set-matrix
         shell: bash
@@ -47,10 +55,6 @@ jobs:
             echo 'browser_matrix=["${{ inputs.browsers }}"]' >> "$GITHUB_OUTPUT"
           fi
 
-          # Adjust this depending on your suite size.
-          # 4 shards is a good starting point.
-          echo 'shard_total=4' >> "$GITHUB_OUTPUT"
-
   e2e-on-instance:
     needs: prepare
     runs-on: ubuntu-latest
@@ -59,9 +63,9 @@ jobs:
       contents: read
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.parallel_jobs) }}
       matrix:
         browser: ${{ fromJson(needs.prepare.outputs.browser_matrix) }}
-        shard_index: [1, 2, 3, 4]
 
     steps:
       - name: Checkout docs-customized
@@ -116,9 +120,10 @@ jobs:
           cd docs/src/frontend/apps/e2e
           yarn install-playwright ${{ matrix.browser }}
 
-      - name: Run e2e tests (sharded)
+      - name: Run e2e tests
         env:
           PLAYWRIGHT_HTML_OPEN: never
+          PLAYWRIGHT_FORCE_TTY: "120"
         run: |
           cd docs/src/frontend
 
@@ -129,8 +134,7 @@ jobs:
 
           yarn e2e:test \
             --project=${{ matrix.browser }} \
-            --shard=${{ matrix.shard_index }}/${{ needs.prepare.outputs.shard_total }} \
-            --reporter=blob \
+            --reporter=list,blob \
             --max-failures=0 \
             $LAST_FAILED_FLAG
 
@@ -138,7 +142,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: blob-report-${{ inputs.instance }}-${{ matrix.browser }}-shard-${{ matrix.shard_index }}
+          name: blob-report-${{ inputs.instance }}-${{ matrix.browser }}
           path: docs/src/frontend/blob-report
           retention-days: 7
 
@@ -150,11 +154,15 @@ jobs:
           path: docs/src/frontend/.last-run.json
           retention-days: 7
 
+      - name: Find .last-run.json
+        if: always()
+        run: find docs/src/frontend -name ".last-run.json" 2>/dev/null || echo "Not found"
+
       - name: Upload test results on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-instance-results-${{ inputs.instance }}-${{ matrix.browser }}-shard-${{ matrix.shard_index }}
+          name: playwright-instance-results-${{ inputs.instance }}-${{ matrix.browser }}
           path: docs/src/frontend/apps/e2e/test-results/
           retention-days: 7
 
