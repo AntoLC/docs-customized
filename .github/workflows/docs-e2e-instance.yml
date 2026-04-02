@@ -117,7 +117,7 @@ jobs:
       - name: Run e2e tests
         env:
           PLAYWRIGHT_HTML_OPEN: never
-          PLAYWRIGHT_FORCE_TTY: "120"
+          PLAYWRIGHT_LIST_PRINT_STEPS: true
         run: |
           cd docs/src/frontend
 
