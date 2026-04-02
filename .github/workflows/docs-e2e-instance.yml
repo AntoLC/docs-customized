@@ -66,7 +66,7 @@ jobs:
 
       - name: Save the frontend cache
         uses: actions/cache/save@v4
-        if: always()
+        if: steps.cache-frontend.outputs.cache-hit != 'true'
         with:
           path: "docs/src/frontend/**/node_modules"
           key: front-node_modules-${{ hashFiles('docs/src/frontend/**/yarn.lock') }}
@@ -77,10 +77,12 @@ jobs:
 
       - name: Download last-run artifact
         if: ${{ inputs.last_failed }}
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v6
         with:
           name: playwright-instance-last-run-${{ inputs.browsers }}
           path: docs/src/frontend/apps/e2e
+          workflow: docs-e2e-instance.yml
+          workflow_conclusion: ""
         continue-on-error: true
 
       - name: Install Playwright browsers
@@ -100,9 +102,9 @@ jobs:
             LAST_FAILED_FLAG="--last-failed"
           fi
           if [ "${{ inputs.browsers }}" = "all" ]; then
-            yarn e2e:test --project=chromium --project=firefox --project=webkit $LAST_FAILED_FLAG
+            yarn e2e:test --project=chromium --project=firefox --project=webkit --reporter=list $LAST_FAILED_FLAG
           else
-            yarn e2e:test --project=${{ inputs.browsers }} $LAST_FAILED_FLAG
+            yarn e2e:test --project=${{ inputs.browsers }} --reporter=list $LAST_FAILED_FLAG
           fi
 
       - name: Upload last-run artifact
