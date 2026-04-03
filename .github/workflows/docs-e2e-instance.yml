@@ -21,8 +21,8 @@ on:
           - firefox
           - webkit
           - all
-      parallel_jobs:
-        description: Maximum number of browser jobs to run in parallel
+      workers:
+        description: Number of Playwright workers to use
         required: false
         default: "2"
         type: choice
@@ -30,42 +30,18 @@ on:
           - "1"
           - "2"
           - "3"
-      last_failed:
-        description: Only re-run tests that failed in the last run
-        required: false
-        default: false
-        type: boolean
+          - "4"
 
 concurrency:
-  group: e2e-instance-${{ github.workflow }}-${{ inputs.instance }}-${{ inputs.browsers }}-${{ inputs.parallel_jobs }}
+  group: e2e-instance-${{ github.workflow }}-${{ inputs.instance }}-${{ inputs.browsers }}-${{ inputs.workers }}
   cancel-in-progress: false
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      browser_matrix: ${{ steps.set-matrix.outputs.browser_matrix }}
-    steps:
-      - id: set-matrix
-        shell: bash
-        run: |
-          if [ "${{ inputs.browsers }}" = "all" ]; then
-            echo 'browser_matrix=["chromium","firefox","webkit"]' >> "$GITHUB_OUTPUT"
-          else
-            echo 'browser_matrix=["${{ inputs.browsers }}"]' >> "$GITHUB_OUTPUT"
-          fi
-
   e2e-on-instance:
-    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      max-parallel: ${{ fromJSON(inputs.parallel_jobs) }}
-      matrix:
-        browser: ${{ fromJson(needs.prepare.outputs.browser_matrix) }}
 
     steps:
       - name: Checkout docs-customized
@@ -89,6 +65,14 @@ jobs:
             docs/src/frontend/yarn.lock
             docs/src/frontend/apps/e2e/yarn.lock
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
       - name: Install frontend dependencies
         run: |
           cd docs/src/frontend
@@ -99,20 +83,24 @@ jobs:
           cp docs-customized/docs-custom/${{ inputs.instance }}/.env.e2e docs/src/frontend/apps/e2e/.env.local
 
       - name: Restore last-run.json
-        if: ${{ inputs.last_failed }}
+        if: ${{ github.run_attempt > 1 }}
         uses: dawidd6/action-download-artifact@v6
         with:
-          name: playwright-instance-last-run-${{ inputs.instance }}-${{ matrix.browser }}
+          name: playwright-instance-last-run-${{ inputs.instance }}-${{ inputs.browsers }}
           path: docs/src/frontend/apps/e2e/test-results
           workflow: docs-e2e-instance.yml
           workflow_conclusion: ""
           if_no_artifact_found: warn
         continue-on-error: true
 
-      - name: Install Playwright browser
+      - name: Install Playwright browsers
         run: |
           cd docs/src/frontend/apps/e2e
-          yarn install-playwright ${{ matrix.browser }}
+          if [ "${{ inputs.browsers }}" = "all" ]; then
+            yarn install-playwright chromium firefox webkit
+          else
+            yarn install-playwright ${{ inputs.browsers }}
+          fi
 
       - name: Run e2e tests
         env:
@@ -122,85 +110,48 @@ jobs:
           cd docs/src/frontend
 
           LAST_FAILED_FLAG=""
-          if [ "${{ inputs.last_failed }}" = "true" ]; then
+          if [ "${{ github.run_attempt }}" != "1" ]; then
             LAST_FAILED_FLAG="--last-failed"
           fi
 
+          PROJECT_FLAGS=""
+          if [ "${{ inputs.browsers }}" = "all" ]; then
+            PROJECT_FLAGS="--project=chromium --project=firefox --project=webkit"
+          else
+            PROJECT_FLAGS="--project=${{ inputs.browsers }}"
+          fi
+
           yarn e2e:test \
-            --project=${{ matrix.browser }} \
-            --reporter=list,blob \
+            $PROJECT_FLAGS \
+            --workers=${{ inputs.workers }} \
+            --reporter=list,html \
             --max-failures=0 \
             $LAST_FAILED_FLAG
-
-      - name: Upload blob report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: blob-report-${{ inputs.instance }}-${{ matrix.browser }}
-          path: docs/src/frontend/blob-report
-          retention-days: 7
 
       - name: Upload last-run artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-instance-last-run-${{ inputs.instance }}-${{ matrix.browser }}
-          path: docs/src/frontend/.last-run.json
+          name: playwright-instance-last-run-${{ inputs.instance }}-${{ inputs.browsers }}
+          path: docs/src/frontend/apps/e2e/test-results/.last-run.json
           retention-days: 7
 
       - name: Find .last-run.json
         if: always()
-        run: find docs/src/frontend -name ".last-run.json" 2>/dev/null || echo "Not found"
+        run: find docs/src/frontend/apps/e2e/test-results -name ".last-run.json" 2>/dev/null || echo "Not found"
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-instance-report-${{ inputs.instance }}-${{ inputs.browsers }}
+          path: docs/src/frontend/apps/e2e/report/
+          retention-days: 7
 
       - name: Upload test results on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-instance-results-${{ inputs.instance }}-${{ matrix.browser }}
+          name: playwright-instance-results-${{ inputs.instance }}-${{ inputs.browsers }}
           path: docs/src/frontend/apps/e2e/test-results/
-          retention-days: 7
-
-  merge-reports:
-    needs: e2e-on-instance
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout suitenumerique/docs
-        uses: actions/checkout@v5
-        with:
-          repository: suitenumerique/docs
-          ref: e2e/test-on-instance
-          path: docs
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "22.x"
-          cache: yarn
-          cache-dependency-path: |
-            docs/src/frontend/yarn.lock
-            docs/src/frontend/apps/e2e/yarn.lock
-
-      - name: Install frontend dependencies
-        run: |
-          cd docs/src/frontend
-          yarn install --frozen-lockfile
-
-      - name: Download all blob reports
-        uses: actions/download-artifact@v4
-        with:
-          path: docs/src/frontend/all-blob-reports
-          pattern: blob-report-${{ inputs.instance }}-*
-          merge-multiple: true
-
-      - name: Merge Playwright reports
-        run: |
-          cd docs/src/frontend
-          npx playwright merge-reports --reporter html ./all-blob-reports
-
-      - name: Upload merged HTML report
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-instance-report-${{ inputs.instance }}
-          path: docs/src/frontend/playwright-report
           retention-days: 7
