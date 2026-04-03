@@ -118,7 +118,6 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ steps.playwright-cache.outputs.cache-primary-key }}
 
-
   e2e-on-instance:
     needs: prepare-e2e
     runs-on: ubuntu-latest
@@ -162,16 +161,13 @@ jobs:
         run: |
           cp docs-customized/docs-custom/${{ inputs.instance }}/.env.e2e docs/src/frontend/apps/e2e/.env.local
 
-      - name: Restore last-run.json
+      - name: Restore last-run cache
         if: ${{ github.run_attempt > 1 || inputs.last_failed }}
-        uses: dawidd6/action-download-artifact@v6
+        id: restore-last-run
+        uses: actions/cache/restore@v4
         with:
-          name: playwright-instance-last-run-${{ inputs.instance }}-${{ inputs.browsers }}
-          path: docs/src/frontend/apps/e2e/test-results
-          workflow: docs-e2e-instance.yml
-          workflow_conclusion: ""
-          if_no_artifact_found: warn
-        continue-on-error: true
+          path: docs/src/frontend/apps/e2e/test-results/.last-run.json
+          key: playwright-last-run-${{ github.ref_name }}-${{ inputs.instance }}-${{ inputs.browsers }}
 
       - name: Run e2e tests
         env:
@@ -183,7 +179,8 @@ jobs:
           cd docs/src/frontend
 
           LAST_FAILED_FLAG=""
-          if [ "${{ github.run_attempt }}" != "1" ] || [ "${{ inputs.last_failed }}" = "true" ]; then
+          if { [ "${{ github.run_attempt }}" != "1" ] || [ "${{ inputs.last_failed }}" = "true" ]; } && [ -f apps/e2e/test-results/.last-run.json ]; then
+            echo "Previous .last-run.json found, enabling --last-failed"
             LAST_FAILED_FLAG="--last-failed"
           fi
 
@@ -201,6 +198,13 @@ jobs:
             --max-failures=0 \
             $LAST_FAILED_FLAG
 
+      - name: Save last-run cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: docs/src/frontend/apps/e2e/test-results/.last-run.json
+          key: playwright-last-run-${{ github.ref_name }}-${{ inputs.instance }}-${{ inputs.browsers }}
+
       - name: Upload last-run artifact
         if: always()
         uses: actions/upload-artifact@v6
@@ -210,15 +214,6 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 7
-
-      - name: Debug Playwright outputs
-        if: always()
-        run: |
-          echo 'Searching for .last-run.json'
-          find docs -name ".last-run.json" 2>/dev/null || echo "Not found"
-          echo 'Searching for HTML report folders'
-          find docs -type d \( -name "report" -o -name "playwright-report" \) 2>/dev/null || echo "No report directory found"
-          test -f docs/src/frontend/apps/e2e/test-results/.last-run.json && echo "last-run file present" || echo "last-run file missing"
 
       - name: Upload HTML report
         if: always()
