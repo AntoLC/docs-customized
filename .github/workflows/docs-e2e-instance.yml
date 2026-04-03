@@ -37,9 +37,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  e2e-on-instance:
+  prepare-e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     permissions:
       contents: read
 
@@ -65,8 +65,9 @@ jobs:
             docs/src/frontend/yarn.lock
             docs/src/frontend/apps/e2e/yarn.lock
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
+      - name: Restore Playwright browsers cache
+        id: playwright-cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
@@ -82,6 +83,47 @@ jobs:
         run: |
           cp docs-customized/docs-custom/${{ inputs.instance }}/.env.e2e docs/src/frontend/apps/e2e/.env.local
 
+      - name: Install Playwright browsers
+        run: |
+          cd docs/src/frontend/apps/e2e
+          if [ "${{ inputs.browsers }}" = "all" ]; then
+            yarn install-playwright chromium firefox webkit
+          else
+            yarn install-playwright ${{ inputs.browsers }}
+          fi
+
+      - name: Save Playwright browsers cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ steps.playwright-cache.outputs.cache-primary-key }}
+
+      - name: Upload prepared frontend workspace
+        uses: actions/upload-artifact@v6
+        with:
+          name: prepared-frontend-${{ inputs.instance }}-${{ inputs.browsers }}
+          path: |
+            docs/src/frontend
+            !docs/src/frontend/apps/e2e/report
+            !docs/src/frontend/apps/e2e/test-results
+          include-hidden-files: true
+          retention-days: 1
+
+  e2e-on-instance:
+    needs: prepare-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Download prepared frontend workspace
+        uses: actions/download-artifact@v5
+        with:
+          name: prepared-frontend-${{ inputs.instance }}-${{ inputs.browsers }}
+          path: .
+
       - name: Restore last-run.json
         if: ${{ github.run_attempt > 1 }}
         uses: dawidd6/action-download-artifact@v6
@@ -93,19 +135,11 @@ jobs:
           if_no_artifact_found: warn
         continue-on-error: true
 
-      - name: Install Playwright browsers
-        run: |
-          cd docs/src/frontend/apps/e2e
-          if [ "${{ inputs.browsers }}" = "all" ]; then
-            yarn install-playwright chromium firefox webkit
-          else
-            yarn install-playwright ${{ inputs.browsers }}
-          fi
-
       - name: Run e2e tests
         env:
           PLAYWRIGHT_HTML_OPEN: never
           PLAYWRIGHT_LIST_PRINT_STEPS: true
+          PLAYWRIGHT_HTML_OUTPUT_DIR: docs/src/frontend/apps/e2e/report
         run: |
           cd docs/src/frontend
 
@@ -130,28 +164,37 @@ jobs:
 
       - name: Upload last-run artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-instance-last-run-${{ inputs.instance }}-${{ inputs.browsers }}
           path: docs/src/frontend/apps/e2e/test-results/.last-run.json
+          include-hidden-files: true
+          if-no-files-found: warn
           retention-days: 7
 
-      - name: Find .last-run.json
+      - name: Debug Playwright outputs
         if: always()
-        run: find docs/src/frontend/apps/e2e/test-results -name ".last-run.json" 2>/dev/null || echo "Not found"
+        run: |
+          echo 'Searching for .last-run.json'
+          find docs -name ".last-run.json" 2>/dev/null || echo "Not found"
+          echo 'Searching for HTML report folders'
+          find docs -type d \( -name "report" -o -name "playwright-report" \) 2>/dev/null || echo "No report directory found"
+          test -f docs/src/frontend/apps/e2e/test-results/.last-run.json && echo "last-run file present" || echo "last-run file missing"
 
       - name: Upload HTML report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-instance-report-${{ inputs.instance }}-${{ inputs.browsers }}
           path: docs/src/frontend/apps/e2e/report/
+          if-no-files-found: warn
           retention-days: 7
 
       - name: Upload test results on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-instance-results-${{ inputs.instance }}-${{ inputs.browsers }}
           path: docs/src/frontend/apps/e2e/test-results/
+          if-no-files-found: warn
           retention-days: 7
