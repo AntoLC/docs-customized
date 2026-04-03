@@ -56,14 +56,18 @@ jobs:
           ref: e2e/test-on-instance
           path: docs
 
+      - name: Restore frontend cache
+        id: front-node_modules
+        uses: actions/cache@v5
+        with:
+          path: "docs/src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('docs/src/frontend/**/yarn.lock') }}
+
       - name: Setup Node.js
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
         uses: actions/setup-node@v6
         with:
           node-version: "22.x"
-          cache: yarn
-          cache-dependency-path: |
-            docs/src/frontend/yarn.lock
-            docs/src/frontend/apps/e2e/yarn.lock
 
       - name: Restore Playwright browsers cache
         id: playwright-cache
@@ -75,9 +79,17 @@ jobs:
             playwright-${{ runner.os }}-
 
       - name: Install frontend dependencies
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
         run: |
           cd docs/src/frontend
           yarn install --frozen-lockfile
+
+      - name: Save frontend cache
+        if: steps.front-node_modules.outputs.cache-hit != 'true'
+        uses: actions/cache@v5
+        with:
+          path: "docs/src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('docs/src/frontend/**/yarn.lock') }}
 
       - name: Add config file
         run: |
@@ -99,16 +111,6 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ steps.playwright-cache.outputs.cache-primary-key }}
 
-      - name: Upload prepared frontend workspace
-        uses: actions/upload-artifact@v6
-        with:
-          name: prepared-frontend-${{ inputs.instance }}-${{ inputs.browsers }}
-          path: |
-            docs/src/frontend
-            !docs/src/frontend/apps/e2e/report
-            !docs/src/frontend/apps/e2e/test-results
-          include-hidden-files: true
-          retention-days: 1
 
   e2e-on-instance:
     needs: prepare-e2e
@@ -118,11 +120,36 @@ jobs:
       contents: read
 
     steps:
-      - name: Download prepared frontend workspace
-        uses: actions/download-artifact@v5
+      - name: Checkout docs-customized
+        uses: actions/checkout@v5
         with:
-          name: prepared-frontend-${{ inputs.instance }}-${{ inputs.browsers }}
-          path: .
+          path: docs-customized
+
+      - name: Checkout suitenumerique/docs
+        uses: actions/checkout@v5
+        with:
+          repository: suitenumerique/docs
+          ref: e2e/test-on-instance
+          path: docs
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.x"
+
+      - name: Restore frontend cache
+        uses: actions/cache@v5
+        with:
+          path: "docs/src/frontend/**/node_modules"
+          key: front-node_modules-${{ hashFiles('docs/src/frontend/**/yarn.lock') }}
+          fail-on-cache-miss: true
+
+      - name: Restore Playwright browsers cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
+          fail-on-cache-miss: true
 
       - name: Restore last-run.json
         if: ${{ github.run_attempt > 1 }}
@@ -140,6 +167,7 @@ jobs:
           PLAYWRIGHT_HTML_OPEN: never
           PLAYWRIGHT_LIST_PRINT_STEPS: true
           PLAYWRIGHT_HTML_OUTPUT_DIR: docs/src/frontend/apps/e2e/report
+          FORCE_COLOR: true
         run: |
           cd docs/src/frontend
 
