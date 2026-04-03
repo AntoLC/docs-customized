@@ -31,6 +31,11 @@ on:
           - "2"
           - "3"
           - "4"
+      last_failed:
+        description: Only re-run tests that failed in the last run
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: e2e-instance-${{ github.workflow }}-${{ inputs.instance }}-${{ inputs.browsers }}-${{ inputs.workers }}
@@ -158,7 +163,7 @@ jobs:
           cp docs-customized/docs-custom/${{ inputs.instance }}/.env.e2e docs/src/frontend/apps/e2e/.env.local
 
       - name: Restore last-run.json
-        if: ${{ github.run_attempt > 1 }}
+        if: ${{ github.run_attempt > 1 || inputs.last_failed }}
         uses: dawidd6/action-download-artifact@v6
         with:
           name: playwright-instance-last-run-${{ inputs.instance }}-${{ inputs.browsers }}
@@ -172,13 +177,13 @@ jobs:
         env:
           PLAYWRIGHT_HTML_OPEN: never
           PLAYWRIGHT_LIST_PRINT_STEPS: true
-          PLAYWRIGHT_HTML_OUTPUT_DIR: docs/src/frontend/apps/e2e/report
+          PLAYWRIGHT_HTML_OUTPUT_DIR: apps/e2e/report
           FORCE_COLOR: true
         run: |
           cd docs/src/frontend
 
           LAST_FAILED_FLAG=""
-          if [ "${{ github.run_attempt }}" != "1" ]; then
+          if [ "${{ github.run_attempt }}" != "1" ] || [ "${{ inputs.last_failed }}" = "true" ]; then
             LAST_FAILED_FLAG="--last-failed"
           fi
 
