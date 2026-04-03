@@ -24,7 +24,7 @@ on:
       workers:
         description: Number of Playwright workers to use
         required: false
-        default: "2"
+        default: "4"
         type: choice
         options:
           - "1"
@@ -173,7 +173,7 @@ jobs:
         env:
           PLAYWRIGHT_HTML_OPEN: never
           PLAYWRIGHT_LIST_PRINT_STEPS: true
-          PLAYWRIGHT_HTML_OUTPUT_DIR: apps/e2e/report
+          PLAYWRIGHT_HTML_OUTPUT_DIR: report
           FORCE_COLOR: true
         run: |
           cd docs/src/frontend
