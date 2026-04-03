@@ -74,8 +74,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
+          key: playwright-${{ runner.os }}-${{ inputs.browsers }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
           restore-keys: |
+            playwright-${{ runner.os }}-${{ inputs.browsers }}-
             playwright-${{ runner.os }}-
 
       - name: Install frontend dependencies
@@ -96,6 +97,7 @@ jobs:
           cp docs-customized/docs-custom/${{ inputs.instance }}/.env.e2e docs/src/frontend/apps/e2e/.env.local
 
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
           cd docs/src/frontend/apps/e2e
           if [ "${{ inputs.browsers }}" = "all" ]; then
@@ -105,7 +107,7 @@ jobs:
           fi
 
       - name: Save Playwright browsers cache
-        if: always()
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: ~/.cache/ms-playwright
@@ -148,7 +150,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
+          key: playwright-${{ runner.os }}-${{ inputs.browsers }}-${{ hashFiles('docs/src/frontend/yarn.lock', 'docs/src/frontend/apps/e2e/yarn.lock') }}
           fail-on-cache-miss: true
 
       - name: Add config file
