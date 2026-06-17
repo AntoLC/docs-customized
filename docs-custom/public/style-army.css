@@ -1,0 +1,12 @@
+.--docs--title {
+    color: #000;
+}
+.--docs--title::after {
+    content: "C1DR";
+    color: #fff;
+    background-color: #2845c1;
+    border-radius: 4px;
+    padding: 2px 9px;
+    font-size: 15px;
+    margin-left: 1rem;
+}
